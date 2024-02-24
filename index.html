@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exercício do Alien</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    <style> body { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; } </style>
+</head>
+
+<body>
+    <script>
+        // Criando variaveis de dimensão da tela do jogo;
+        const larguraJogo = 700;
+        const alturaJogo = 850;
+
+        // Adicionado as dimensão utilizando as variaveis(dimensões) criadas anteriormente;
+        const config = {
+            type: Phaser.AUTO,
+            width: larguraJogo,
+            height: alturaJogo,
+
+            // Está será a física do jogo;
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    gravity: {y: 300},
+                    debug: true
+                }
+            },
+
+            // Preparando para a criação da cena do jogo;
+            scene: {
+                preload: preload,
+                create: create,
+                update: update
+            }
+        };
+
+        // Carregando o novo jogo Phaser;
+        const game = new Phaser.Game(config);
+
+        // Fazendo a definição das variáveis que serão usadas na criação do jogo;
+        var alien;
+        var teclado;
+        var fogo;
+        var plataformas;
+        var moeda;
+        var pontuacao = 0;
+        var placar;
+        var keyb;
+
+        // Carregando imagens;
+        function preload() {
+            this.load.image('background', 'assets/bg.png');
+            this.load.image('player', 'assets/alienigena.png');
+            this.load.image('fogo', 'assets/turbo.png');
+            this.load.image('plataforma', 'assets/tijolos.png');
+            this.load.image('moeda', 'assets/moeda.png');
+        }
+
+        // Criação de objetos e interações;
+        function create() {
+            this.add.image(larguraJogo/2, alturaJogo/2, 'background');//escolhendo onde o centro do background será colocado
+
+            // Adicionando o turbo do disco voador;
+            fogo = this.add.sprite(0, 0, 'fogo');
+            fogo.setVisible(false);
+
+            // Adicionando o alien e sua colisão com as limites da tela (bordas do mundo);
+            alien = this.physics.add.sprite(larguraJogo/2, 0, 'player');
+            alien.setCollideWorldBounds(true);
+
+            teclado = this.input.keyboard.createCursorKeys();
+
+            // Adicionando um array das plataformas do jogo;
+            plataformas = [
+                this.physics.add.staticImage(100 , alturaJogo/2, 'plataforma'),
+                this.physics.add.staticImage(600, alturaJogo/2, 'plataforma')
+            ];
+
+            // Adicionando colisão entre o alien e a plataforma;
+            plataformas.forEach(plataforma => {
+                this.physics.add.collider(alien, plataforma);
+            });
+
+            // Adicionando a moeda do jogo e a sua colisão com a plataforma;
+            moeda = this.physics.add.sprite(larguraJogo/2, 0, 'moeda');
+            moeda.setCollideWorldBounds(true);
+            plataformas.forEach(plataforma => {
+                this.physics.add.collider(moeda, plataforma);
+            });
+
+            placar = this.add.text(50, 50, 'Moedas:' + pontuacao, {fontSize:'45px', fill:'#495613'});
+
+            // Criando uma interação entre o alien e a moeda + o sistema de pontos do jogo;
+            this.physics.add.overlap(alien, moeda, function(){
+                moeda.setVisible(false);
+
+                var posicaoMoeda_Y = Phaser.Math.RND.between(50, 650);
+                moeda.setPosition(posicaoMoeda_Y, 100);
+
+                pontuacao +=1;
+                placar.setText('Moedas:' + pontuacao);
+
+                moeda.setVisible(true);
+            });
+
+            // Adicionando a opção alternativa de usar as teclas WASD para movimentação do disco voador;
+            keybA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A); 
+            keybD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D); 
+            keybW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+            KeybS = this.imput.keyboard.addKey(Phaser.Imput.Keyboard.KeyCodes.S);
+        }
+
+        
+        function update() {
+            // Criando um sistema de movimento ao disco e definindo quando o turbo deverá aparecer abaixo da nave;
+            if (teclado.left.isDown || keybA.isDown) {
+                alien.setVelocityX(-200);
+            }
+
+            else if (teclado.right.isDown || keybD.isDown) {
+                alien.setVelocityX(200);
+            }
+
+            else {
+                alien.setVelocityX(0);
+            }
+
+            if (teclado.up.isDown || keybW.isDown || teclado.space.isDown){
+                alien.setVelocityY(-200);
+                ativarTurbo();
+            }
+
+            else {
+                semTurbo();
+            }
+                
+            fogo.setPosition(alien.x, alien.y + alien.height/2);
+
+            // Adicionando final ao jogo quando o jogador alcançar 25 pontos e mensagem de "Você conseguiu" ao alcançá-lo;
+            if (pontuacao === 25){
+                this.physics.pause();
+                this.add.text(275, 400, 'Você Conseguiu', { fontSize: '30px', fill: '#000000' });
+            }
+
+        }
+
+        // Acrescentando as funções responsáveis por ativar e desativar o turbo(fogo);
+        function ativarTurbo() {
+            fogo.setVisible(true);
+        }
+
+        function semTurbo(){
+            fogo.setVisible(false);
+        }
+
+    </script>
+</body>
+</html>
